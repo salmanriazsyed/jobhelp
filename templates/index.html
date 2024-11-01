@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Description and Resume Matcher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Job Description and Resume Matcher</h1>
+    <form id="job-form">
+        <label for="job_description">Job Description:</label><br>
+        <textarea id="job_description" name="job_description" rows="5" cols="60"></textarea><br><br>
+        
+        <label for="resume">Resume:</label><br>
+        <textarea id="resume" name="resume" rows="5" cols="60"></textarea><br><br>
+        
+        <button type="button" onclick="calculateMatch()">Calculate Match</button>
+        <button type="button" onclick="generateCoverLetter()">Generate Cover Letter</button>
+    </form>
+
+    <h2>Results</h2>
+    <p id="match-result"></p>
+    <p id="relevance-score"></p>
+    <p id="suggestions"></p>
+    <p id="cover-letter-result"></p>
+
+    <script>
+        function calculateMatch() {
+    const jobDescription = document.getElementById("job_description").value;
+    const resume = document.getElementById("resume").value;
+    
+    fetch("/match", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `job_description=${encodeURIComponent(jobDescription)}&resume=${encodeURIComponent(resume)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            document.getElementById("match-result").innerText = `Error: ${data.error}`;
+        } else {
+            const matchPercentage = data.match_percentage || 0;
+            const relevanceScore = data.relevance_score || "Not Available";
+            const suggestions = data.suggestions || "No suggestions available";
+            
+            document.getElementById("match-result").innerText = `Match Percentage: ${matchPercentage}%\nMatching Keywords: ${data.matching_keywords.join(', ')}\nRelevance Score: ${relevanceScore}\nSuggestions: ${suggestions}`;
+        }
+    })
+    .catch(error => console.error("Error:", error));
+}
+
+
+        function generateCoverLetter() {
+            const jobDescription = document.getElementById("job_description").value;
+            const resume = document.getElementById("resume").value;
+            
+            fetch("/generate_cover_letter", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `job_description=${encodeURIComponent(jobDescription)}&resume=${encodeURIComponent(resume)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("cover-letter-result").innerText = `Error: ${data.error}`;
+                } else {
+                    document.getElementById("cover-letter-result").innerText = `Cover Letter:\n${data.cover_letter}`;
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
