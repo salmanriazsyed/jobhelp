@@ -3,84 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Description and Resume Matcher</title>
+    <title>Job Help by Salman Riaz Syed</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: auto;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+        }
+        .form-control {
+            height: 150px;
+            resize: vertical;
+        }
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            margin-top: 10px;
+        }
+        #responseContainer {
+            margin-top: 20px;
+            background-color: #e9ecef;
             padding: 20px;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
-    <h1>Job Description and Resume Matcher</h1>
-    <form id="job-form">
-        <label for="job_description">Job Description:</label><br>
-        <textarea id="job_description" name="job_description" rows="5" cols="60"></textarea><br><br>
-        
-        <label for="resume">Resume:</label><br>
-        <textarea id="resume" name="resume" rows="5" cols="60"></textarea><br><br>
-        
-        <button type="button" onclick="calculateMatch()">Calculate Match</button>
-        <button type="button" onclick="generateCoverLetter()">Generate Cover Letter</button>
+
+<div class="container">
+    <h2 class="text-center">Job Help by Salman Riaz Syed</h2>
+    <p class="text-center text-muted">optimize your resume for a specific job description</p>
+
+    <form id="jobForm">
+        <div class="form-group">
+            <label for="jobDescription">Job Description</label>
+            <textarea class="form-control" id="jobDescription" placeholder="Paste the job description here..."></textarea>
+        </div>
+        <div class="form-group">
+            <label for="resume">Resume</label>
+            <textarea class="form-control" id="resume" placeholder="Paste your resume here..."></textarea>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="calculateRelevance()">Calculate Relevance</button>
+        <button type="button" class="btn btn-secondary" onclick="generateCoverLetter()">Generate Cover Letter</button>
     </form>
 
-    <h2>Results</h2>
-    <p id="match-result"></p>
-    <p id="relevance-score"></p>
-    <p id="suggestions"></p>
-    <p id="cover-letter-result"></p>
+    <div id="responseContainer" class="d-none">
+        <h4>Response</h4>
+        <pre id="responseText"></pre>
+        <button class="btn btn-success" onclick="copyToClipboard()">Copy to Clipboard</button>
+    </div>
+</div>
 
-    <script>
-        function calculateMatch() {
-    const jobDescription = document.getElementById("job_description").value;
-    const resume = document.getElementById("resume").value;
-    
-    fetch("/match", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: `job_description=${encodeURIComponent(jobDescription)}&resume=${encodeURIComponent(resume)}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            document.getElementById("match-result").innerText = `Error: ${data.error}`;
-        } else {
-            const matchPercentage = data.match_percentage || 0;
-            const relevanceScore = data.relevance_score || "Not Available";
-            const suggestions = data.suggestions || "No suggestions available";
-            
-            document.getElementById("match-result").innerText = `Match Percentage: ${matchPercentage}%\nMatching Keywords: ${data.matching_keywords.join(', ')}\nRelevance Score: ${relevanceScore}\nSuggestions: ${suggestions}`;
+<script>
+    async function calculateRelevance() {
+        const jobDescription = document.getElementById('jobDescription').value;
+        const resume = document.getElementById('resume').value;
+
+        if (!jobDescription || !resume) {
+            alert("Both Job Description and Resume are required.");
+            return;
         }
-    })
-    .catch(error => console.error("Error:", error));
-}
 
+        const response = await fetch('/calculate_relevance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ job_description: jobDescription, resume: resume })
+        });
+        const data = await response.json();
+        displayResponse(data.Answer || data.error);
+    }
 
-        function generateCoverLetter() {
-            const jobDescription = document.getElementById("job_description").value;
-            const resume = document.getElementById("resume").value;
-            
-            fetch("/generate_cover_letter", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: `job_description=${encodeURIComponent(jobDescription)}&resume=${encodeURIComponent(resume)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    document.getElementById("cover-letter-result").innerText = `Error: ${data.error}`;
-                } else {
-                    document.getElementById("cover-letter-result").innerText = `Cover Letter:\n${data.cover_letter}`;
-                }
-            })
-            .catch(error => console.error("Error:", error));
+    async function generateCoverLetter() {
+        const jobDescription = document.getElementById('jobDescription').value;
+        const resume = document.getElementById('resume').value;
+
+        if (!jobDescription || !resume) {
+            alert("Both Job Description and Resume are required.");
+            return;
         }
-    </script>
+
+        const response = await fetch('/generate_cover_letter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ job_description: jobDescription, resume: resume })
+        });
+        const data = await response.json();
+        displayResponse(data.Answer || data.error);
+    }
+
+    function displayResponse(text) {
+        const responseContainer = document.getElementById('responseContainer');
+        const responseText = document.getElementById('responseText');
+        
+        responseText.textContent = text;
+        responseContainer.classList.remove('d-none');
+    }
+
+    function copyToClipboard() {
+        const responseText = document.getElementById('responseText');
+        navigator.clipboard.writeText(responseText.textContent).then(() => {
+            alert("Copied to clipboard!");
+        }).catch(err => {
+            console.error("Could not copy text: ", err);
+        });
+    }
+</script>
+
 </body>
 </html>
